@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
                     is TerminalViewState.ContentTerminal -> {
                         Terminal(bars = currentState.bars)
                     }
+
                     is TerminalViewState.Initial -> {}
                 }
             }
