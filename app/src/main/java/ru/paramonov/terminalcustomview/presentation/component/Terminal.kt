@@ -5,12 +5,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.TransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.dp
@@ -42,6 +45,7 @@ fun Terminal(
         modifier = Modifier
             .fillMaxSize()
             .background(color = Color.Black)
+            .padding(top = 32.dp, bottom = 32.dp)
             .transformable(state = transformableState)
             .onSizeChanged { size ->
                 terminalState = terminalState.copy(terminalWidth = size.width.toFloat())
@@ -69,5 +73,53 @@ fun Terminal(
                 )
             }
         }
+        bars.firstOrNull()?.let { bar ->
+            drawPriceLine(
+                minPriceOnTime = minPriceOnTime,
+                lastPrice = bar.closePrice,
+                pxPerCount = pxPerCount
+            )
+        }
     }
+}
+
+private fun DrawScope.drawPriceLine(
+    minPriceOnTime: Float,
+    lastPrice: Float,
+    pxPerCount: Float
+) {
+    // max price
+    drawDashedLine(
+        start = Offset(x = 0.dp.toPx(), 0.dp.toPx()),
+        end = Offset(x = size.width, 0.dp.toPx())
+    )
+    // last price
+    drawDashedLine(
+        start = Offset(x = 0.dp.toPx(), y = size.height - ((lastPrice - minPriceOnTime) * pxPerCount)),
+        end = Offset(x = size.width, y = size.height - ((lastPrice - minPriceOnTime) * pxPerCount))
+    )
+    // min price
+    drawDashedLine(
+        start = Offset(x = 0.dp.toPx(), y = size.height),
+        end = Offset(x = size.width, size.height)
+    )
+}
+
+private fun DrawScope.drawDashedLine(
+    color: Color = Color.White,
+    start: Offset,
+    end: Offset,
+    strokeWidth: Float = 1f
+) {
+    drawLine(
+        color = color,
+        start = start,
+        end = end,
+        strokeWidth = strokeWidth,
+        pathEffect = PathEffect.dashPathEffect(
+            intervals = floatArrayOf(
+                4.dp.toPx(), 4.dp.toPx()
+            )
+        )
+    )
 }
