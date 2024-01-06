@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -38,6 +39,15 @@ class TerminalViewModel : ViewModel() {
                 bars = results,
                 timeFrame = timeFrame
             )
+        }.invokeOnCompletion { cause ->
+            cause?.let {
+                val message = "Сервера перегружены! Подждите минуту."
+                viewModelScope.launch {
+                    _viewState.value = TerminalViewState.Error(message = message)
+                    delay(3000)
+                    _viewState.value = lastState
+                }
+            }
         }
     }
 }
