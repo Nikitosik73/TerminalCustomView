@@ -14,18 +14,28 @@ data class TerminalState(
     val bars: List<Bar>,
     val visibleBarsCount: Int = 100,
     val scrolledBy: Float = 0f,
-    val terminalWidth: Float = 0f
+    val terminalWidth: Float = 1f,
+    val terminalHeight: Float = 1f
 ) {
 
     val barWidth: Float
         get() = terminalWidth / visibleBarsCount
 
-    val visibleBars: List<Bar>
+    private val visibleBars: List<Bar>
         get() {
             val startIndex = (scrolledBy / barWidth).roundToInt().coerceAtLeast(minimumValue = 0)
             val endIndex = (startIndex + visibleBarsCount).coerceAtMost(maximumValue = bars.size)
             return bars.subList(fromIndex = startIndex, toIndex = endIndex)
         }
+
+    val maxPriceOnTime: Float
+        get() = visibleBars.maxOf { bar -> bar.highPrice }
+
+    val minPriceOnTime: Float
+        get() = visibleBars.minOf { bar -> bar.lowPrice }
+
+    val pxPerCount: Float
+        get() = terminalHeight / (maxPriceOnTime - minPriceOnTime)
 
     companion object {
 
