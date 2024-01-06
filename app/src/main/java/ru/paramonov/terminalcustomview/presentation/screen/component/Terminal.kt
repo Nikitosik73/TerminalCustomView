@@ -6,9 +6,14 @@ import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -103,6 +108,27 @@ private fun TerminalContent(
                 CircularProgressIndicator(color = Color.White)
             }
         }
+
+        is TerminalViewState.Error -> {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Black),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = currentState.message, color = Color.White)
+                    Spacer(modifier = modifier.height(height = 16.dp))
+                    CircularProgressIndicator(color = Color.White)
+                }
+            }
+        }
     }
 }
 
@@ -118,11 +144,12 @@ private fun TimeFrames(
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         TimeFrame.entries.forEach { timeFrames ->
-            val stringResId = when(timeFrames) {
+            val stringResId = when (timeFrames) {
                 TimeFrame.MIN_5 -> R.string.timeframe_5_minute
                 TimeFrame.MIN_15 -> R.string.timeframe_15_minute
                 TimeFrame.MIN_30 -> R.string.timeframe_30_minute
                 TimeFrame.HOUR_1 -> R.string.timeframe_1_hour
+                TimeFrame.DAY_1 -> R.string.timeframe_1_day
             }
             val isSelectedTimeFrames = selectedFrame == timeFrames
             AssistChip(
