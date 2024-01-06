@@ -1,4 +1,4 @@
-package ru.paramonov.terminalcustomview.presentation.component
+package ru.paramonov.terminalcustomview.presentation.screen.component
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
