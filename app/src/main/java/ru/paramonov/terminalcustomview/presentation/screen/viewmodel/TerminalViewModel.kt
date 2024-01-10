@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import ru.paramonov.terminalcustomview.R
 import ru.paramonov.terminalcustomview.data.network.ApiFactory
 import ru.paramonov.terminalcustomview.presentation.screen.TimeFrame
 import ru.paramonov.terminalcustomview.presentation.screen.component.TerminalViewState
@@ -41,9 +42,9 @@ class TerminalViewModel : ViewModel() {
             )
         }.invokeOnCompletion { cause ->
             cause?.let {
-                val message = "Сервера перегружены! Подждите минуту."
+                val messageResId = R.string.message_error
                 viewModelScope.launch {
-                    _viewState.value = TerminalViewState.Error(message = message)
+                    _viewState.value = TerminalViewState.Error(messageResId = messageResId)
                     delay(3000)
                     _viewState.value = lastState
                 }
