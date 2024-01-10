@@ -42,8 +42,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ru.paramonov.terminalcustomview.R
+import ru.paramonov.terminalcustomview.data.model.Bar
 import ru.paramonov.terminalcustomview.presentation.screen.TimeFrame
 import ru.paramonov.terminalcustomview.presentation.screen.viewmodel.TerminalViewModel
+import java.util.Calendar
+import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val MIN_VISIBLE_BARS_COUNT = 20
@@ -77,7 +80,8 @@ private fun TerminalContent(
                 terminalState = terminalState,
                 onChangeTerminalState = {
                     terminalState.value = it
-                }
+                },
+                timeFrame = currentState.timeFrame
             )
 
             currentState.bars.firstOrNull()?.let { bar ->
@@ -123,7 +127,7 @@ private fun TerminalContent(
                     verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text(text = currentState.message, color = Color.White)
+                    Text(text = stringResource(id = currentState.messageResId), color = Color.White)
                     Spacer(modifier = modifier.height(height = 16.dp))
                     CircularProgressIndicator(color = Color.White)
                 }
@@ -168,7 +172,8 @@ private fun TimeFrames(
 private fun Chart(
     modifier: Modifier = Modifier,
     terminalState: State<TerminalState>,
-    onChangeTerminalState: (TerminalState) -> Unit
+    onChangeTerminalState: (TerminalState) -> Unit,
+    timeFrame: TimeFrame
 ) {
     val currentState = terminalState.value
     val transformableState = rememberTransformableState { zoomChange, panChange, _ ->
@@ -188,6 +193,8 @@ private fun Chart(
             )
         )
     }
+
+    val textMeasurer = rememberTextMeasurer()
 
     Canvas(
         modifier = modifier
@@ -211,6 +218,18 @@ private fun Chart(
         translate(left = currentState.scrolledBy) {
             currentState.bars.forEachIndexed { index, bar ->
                 val offsetX = size.width - index * currentState.barWidth
+
+                drawTimeDelimiter(
+                    bar = bar,
+                    nextBar = if (index < currentState.bars.size - 1) {
+                        currentState.bars[index + 1]
+                    } else {
+                        null
+                    },
+                    timeFrame = timeFrame,
+                    textMeasurer = textMeasurer,
+                    offsetX = offsetX
+                )
                 drawLine(
                     color = Color.White,
                     start = Offset(
@@ -267,6 +286,81 @@ private fun Prices(
             textMeasurer = textMeasurer
         )
     }
+}
+
+private fun DrawScope.drawTimeDelimiter(
+    bar: Bar,
+    nextBar: Bar?,
+    timeFrame: TimeFrame,
+    textMeasurer: TextMeasurer,
+    offsetX: Float
+) {
+    val calendar: Calendar = bar.calendar
+
+    val minutes = calendar.get(Calendar.MINUTE)
+    val hours = calendar.get(Calendar.HOUR_OF_DAY)
+    val day = calendar.get(Calendar.DAY_OF_MONTH)
+    val dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK)
+
+    val shouldDrawDelimiter = when (timeFrame) {
+        TimeFrame.MIN_5 -> {
+            minutes == 0
+        }
+
+        TimeFrame.MIN_15 -> {
+            minutes == 0 && hours % 2 == 0
+        }
+
+        TimeFrame.MIN_30, TimeFrame.HOUR_1 -> {
+            val nextBarDay = nextBar?.calendar?.get(Calendar.DAY_OF_MONTH)
+            day != nextBarDay
+        }
+
+        TimeFrame.DAY_1 -> {
+            val nextBarDayOfWeek = nextBar?.calendar?.get(Calendar.DAY_OF_WEEK)
+            dayOfWeek != nextBarDayOfWeek && day % 2 == 0
+        }
+    }
+
+    if (!shouldDrawDelimiter) return
+
+    drawLine(
+        color = Color.White.copy(alpha = 0.5f),
+        start = Offset(x = offsetX, 0.dp.toPx()),
+        end = Offset(x = offsetX, size.height),
+        strokeWidth = 1.dp.toPx(),
+        pathEffect = PathEffect.dashPathEffect(
+            intervals = floatArrayOf(
+                4.dp.toPx(), 4.dp.toPx()
+            )
+        )
+    )
+
+    val nameOfMouth = calendar.getDisplayName(
+        Calendar.MONTH, Calendar.SHORT, Locale.getDefault()
+    )
+    val nameOfDay = calendar.getDisplayName(
+        Calendar.DAY_OF_WEEK, Calendar.SHORT, Locale.getDefault()
+    )
+
+    val text = when (timeFrame) {
+        TimeFrame.MIN_5, TimeFrame.MIN_15 -> String.format(format = "%02d:00", hours)
+        TimeFrame.MIN_30, TimeFrame.HOUR_1 -> String.format(format = "%s %s", day, nameOfDay)
+        TimeFrame.DAY_1 -> String.format(format = "%s %s", day, nameOfMouth)
+    }
+
+    val textLayoutResult = textMeasurer.measure(
+        text = text,
+        style = TextStyle(
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.White
+        )
+    )
+    drawText(
+        textLayoutResult = textLayoutResult,
+        topLeft = Offset(x = offsetX - textLayoutResult.size.width / 2, y = size.height)
+    )
 }
 
 private fun DrawScope.drawPriceLine(

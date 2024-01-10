@@ -9,7 +9,7 @@ sealed class TerminalViewState {
 
     object Loading : TerminalViewState()
 
-    data class Error(val message: String) : TerminalViewState()
+    data class Error(val messageResId: Int) : TerminalViewState()
 
     data class ContentTerminal(val bars: List<Bar>, val timeFrame: TimeFrame) : TerminalViewState()
 }
